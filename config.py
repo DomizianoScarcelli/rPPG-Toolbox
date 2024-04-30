@@ -5,6 +5,7 @@
 # Written by Ze Liu
 # --------------------------------------------------------'
 
+#TODO: remove train, validation and non custom stuff related variables in this file.
 import os, re
 import yaml
 from yacs.config import CfgNode as CN

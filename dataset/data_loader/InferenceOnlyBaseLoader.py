@@ -176,11 +176,9 @@ class InferenceOnlyBaseLoader(Dataset):
 
         Args:
             frames(np.array): Frames in a video.
-            bvps(np.array): Blood volumne pulse (PPG) signal labels for a video.
             config_preprocess(CfgNode): preprocessing settings(ref:config.py).
         Returns:
             frame_clips(np.array): processed video data by frames
-            bvps_clips(np.array): processed bvp (ppg) labels by frames
         """
         # resize frames and crop for face region
         frames = self.crop_face_resize(
@@ -198,23 +196,17 @@ class InferenceOnlyBaseLoader(Dataset):
         data = list()  # Video data
         for data_type in config_preprocess.DATA_TYPE:
             f_c = frames.copy()
-            if data_type == "Raw":
+            if data_type != "Raw":
                 data.append(f_c)
             elif data_type == "DiffNormalized":
-                data.append(BaseLoader.diff_normalize_data(f_c))
+                data.append(InferenceOnlyBaseLoader.diff_normalize_data(f_c))
             elif data_type == "Standardized":
-                data.append(BaseLoader.standardized_data(f_c))
+                data.append(InferenceOnlyBaseLoader.standardized_data(f_c))
             else:
                 raise ValueError("Unsupported data type!")
         data = np.concatenate(data, axis=-1)  # concatenate all channels
-        if config_preprocess.LABEL_TYPE == "Raw":
-            pass
-        elif config_preprocess.LABEL_TYPE == "DiffNormalized":
-            bvps = BaseLoader.diff_normalize_label(bvps)
-        elif config_preprocess.LABEL_TYPE == "Standardized":
-            bvps = BaseLoader.standardized_label(bvps)
-        else:
-            raise ValueError("Unsupported label type!")
+        if config_preprocess.LABEL_TYPE != "Raw":
+            raise NotImplementedError("InferenceOnlyBaseLoader doesn't support labels, please set LABEL_TYPE to 'RAW'")
 
         if config_preprocess.DO_CHUNK:  # chunk data into snippets
             frames_clips = self.chunk(
@@ -380,7 +372,6 @@ class InferenceOnlyBaseLoader(Dataset):
 
         Args:
             frames_clips(np.array): blood volumne pulse (PPG) labels.
-            bvps_clips(np.array): the length of each chunk.
             filename: name the filename
         Returns:
             count: count of preprocessed data
@@ -389,7 +380,7 @@ class InferenceOnlyBaseLoader(Dataset):
         if not os.path.exists(self.cached_path):
             os.makedirs(self.cached_path, exist_ok=True)
         count = 0
-        for i in range(len(bvps_clips)):
+        for i in range(len(frames_clips)):
             input_path_name = self.cached_path + os.sep + "{0}_input{1}.npy".format(filename, str(count))
             self.inputs.append(input_path_name)
             np.save(input_path_name, frames_clips[i])
@@ -409,7 +400,7 @@ class InferenceOnlyBaseLoader(Dataset):
             os.makedirs(self.cached_path, exist_ok=True)
         count = 0
         input_path_name_list = []
-        for i in range(len(bvps_clips)):
+        for i in range(len(frames_clips)):
             input_path_name = self.cached_path + os.sep + "{0}_input{1}.npy".format(filename, str(count))
             input_path_name_list.append(input_path_name)
             np.save(input_path_name, frames_clips[i])

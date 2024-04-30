@@ -77,7 +77,7 @@ class CustomTrainer(BaseTrainer):
         print('')
         for key, value in predictions.items():
             for key_1, value_1 in value.items():
-                print(f"predictions of key {key_1} has shape: {value_1.shape}")
+                print(f"predictions of key {key_1} have shape: {value_1.shape}")
 
     def save_model(self, index):
         """Inits parameters from args and the writer for TensorboardX."""
