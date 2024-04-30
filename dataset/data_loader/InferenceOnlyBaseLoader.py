@@ -25,7 +25,7 @@ from tqdm import tqdm
 from retinaface import RetinaFace   # Source code: https://github.com/serengil/retinaface
 
 
-class BaseLoader(Dataset):
+class InferenceOnlyBaseLoader(Dataset):
     """The base class for data loading based on pytorch Dataset.
 
     The dataloader supports both providing data for pytorch training and common data-preprocessing methods,
@@ -50,7 +50,6 @@ class BaseLoader(Dataset):
             config_data(CfgNode): data settings(ref:config.py).
         """
         self.inputs = list()
-        self.labels = list()
         self.dataset_name = dataset_name
         self.raw_data_path = raw_data_path
         self.cached_path = config_data.CACHED_PATH
@@ -60,12 +59,11 @@ class BaseLoader(Dataset):
         self.do_preprocess = config_data.DO_PREPROCESS
         self.config_data = config_data
 
-        assert (config_data.BEGIN < config_data.END)
         assert (config_data.BEGIN > 0 or config_data.BEGIN == 0)
         assert (config_data.END < 1 or config_data.END == 1)
         if config_data.DO_PREPROCESS:
             self.raw_data_dirs = self.get_raw_data(self.raw_data_path)
-            self.preprocess_dataset(self.raw_data_dirs, config_data.PREPROCESS, config_data.BEGIN, config_data.END)
+            self.preprocess_dataset(self.raw_data_dirs, config_data.PREPROCESS, begin=0, end=1)
         else:
             if not os.path.exists(self.cached_path):
                 print('CACHED_PATH:', self.cached_path)
@@ -89,7 +87,6 @@ class BaseLoader(Dataset):
     def __getitem__(self, index):
         """Returns a clip of video(3,T,W,H) and it's corresponding signals(T)."""
         data = np.load(self.inputs[index])
-        label = np.load(self.labels[index])
         if self.data_format == 'NDCHW':
             data = np.transpose(data, (0, 3, 1, 2))
         elif self.data_format == 'NCDHW':
@@ -99,7 +96,6 @@ class BaseLoader(Dataset):
         else:
             raise ValueError('Unsupported Data Format!')
         data = np.float32(data)
-        label = np.float32(label)
         # item_path is the location of a specific clip in a preprocessing output folder
         # For example, an item path could be /home/data/PURE_SizeW72_...unsupervised/501_input0.npy
         item_path = self.inputs[index]
@@ -114,7 +110,7 @@ class BaseLoader(Dataset):
         # chunk_id is the extracted, numeric chunk identifier. Following the previous comments, 
         # the chunk_id for example would be 0
         chunk_id = item_path_filename[split_idx + 6:].split('.')[0]
-        return data, label, filename, chunk_id
+        return data, filename, chunk_id
 
     def get_raw_data(self, raw_data_path):
         """Returns raw data directories under the path.
@@ -156,43 +152,8 @@ class BaseLoader(Dataset):
         Returns:
             env_norm_bvp: Hilbert envlope normalized POS PPG signal, filtered are HR frequency
         """
+        raise NotImplementedError("InferenceOnlyBaseLoader does not support labels")
 
-        # generate POS PPG signal
-        WinSec = 1.6
-        RGB = POS_WANG._process_video(frames)
-        N = RGB.shape[0]
-        H = np.zeros((1, N))
-        l = math.ceil(WinSec * fs)
-
-        for n in range(N):
-            m = n - l
-            if m >= 0:
-                Cn = np.true_divide(RGB[m:n, :], np.mean(RGB[m:n, :], axis=0))
-                Cn = np.mat(Cn).H
-                S = np.matmul(np.array([[0, 1, -1], [-2, 1, 1]]), Cn)
-                h = S[0, :] + (np.std(S[0, :]) / np.std(S[1, :])) * S[1, :]
-                mean_h = np.mean(h)
-                for temp in range(h.shape[1]):
-                    h[0, temp] = h[0, temp] - mean_h
-                H[0, m:n] = H[0, m:n] + (h[0])
-
-        bvp = H
-        bvp = utils.detrend(np.mat(bvp).H, 100)
-        bvp = np.asarray(np.transpose(bvp))[0]
-
-        # filter POS PPG w/ 2nd order butterworth filter (around HR freq)
-        # min freq of 0.7Hz was experimentally found to work better than 0.75Hz
-        min_freq = 0.70
-        max_freq = 3
-        b, a = signal.butter(2, [(min_freq) / fs * 2, (max_freq) / fs * 2], btype='bandpass')
-        pos_bvp = signal.filtfilt(b, a, bvp.astype(np.double))
-
-        # apply hilbert normalization to normalize PPG amplitude
-        analytic_signal = signal.hilbert(pos_bvp) 
-        amplitude_envelope = np.abs(analytic_signal) # derive envelope signal
-        env_norm_bvp = pos_bvp/amplitude_envelope # normalize by env
-
-        return np.array(env_norm_bvp) # return POS psuedo labels
     
     def preprocess_dataset(self, data_dirs, config_preprocess, begin, end):
         """Parses and preprocesses all the raw data based on split.
@@ -400,24 +361,21 @@ class BaseLoader(Dataset):
             resized_frames[i] = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
         return resized_frames
 
-    def chunk(self, frames, bvps, chunk_length):
+    def chunk(self, frames, chunk_length):
         """Chunk the data into small chunks.
 
         Args:
             frames(np.array): video frames.
-            bvps(np.array): blood volumne pulse (PPG) labels.
             chunk_length(int): the length of each chunk.
         Returns:
             frames_clips: all chunks of face cropped frames
-            bvp_clips: all chunks of bvp frames
         """
 
         clip_num = frames.shape[0] // chunk_length
         frames_clips = [frames[i * chunk_length:(i + 1) * chunk_length] for i in range(clip_num)]
-        bvps_clips = [bvps[i * chunk_length:(i + 1) * chunk_length] for i in range(clip_num)]
-        return np.array(frames_clips), np.array(bvps_clips)
+        return np.array(frames_clips)
 
-    def save(self, frames_clips, bvps_clips, filename):
+    def save(self, frames_clips, filename):
         """Save all the chunked data.
 
         Args:
@@ -432,42 +390,31 @@ class BaseLoader(Dataset):
             os.makedirs(self.cached_path, exist_ok=True)
         count = 0
         for i in range(len(bvps_clips)):
-            assert (len(self.inputs) == len(self.labels))
             input_path_name = self.cached_path + os.sep + "{0}_input{1}.npy".format(filename, str(count))
-            label_path_name = self.cached_path + os.sep + "{0}_label{1}.npy".format(filename, str(count))
             self.inputs.append(input_path_name)
-            self.labels.append(label_path_name)
             np.save(input_path_name, frames_clips[i])
-            np.save(label_path_name, bvps_clips[i])
             count += 1
         return count
 
-    def save_multi_process(self, frames_clips, bvps_clips, filename):
+    def save_multi_process(self, frames_clips, filename):
         """Save all the chunked data with multi-thread processing.
 
         Args:
             frames_clips(np.array): blood volumne pulse (PPG) labels.
-            bvps_clips(np.array): the length of each chunk.
             filename: name the filename
         Returns:
             input_path_name_list: list of input path names
-            label_path_name_list: list of label path names
         """
         if not os.path.exists(self.cached_path):
             os.makedirs(self.cached_path, exist_ok=True)
         count = 0
         input_path_name_list = []
-        label_path_name_list = []
         for i in range(len(bvps_clips)):
-            assert (len(self.inputs) == len(self.labels))
             input_path_name = self.cached_path + os.sep + "{0}_input{1}.npy".format(filename, str(count))
-            label_path_name = self.cached_path + os.sep + "{0}_label{1}.npy".format(filename, str(count))
             input_path_name_list.append(input_path_name)
-            label_path_name_list.append(label_path_name)
             np.save(input_path_name, frames_clips[i])
-            np.save(label_path_name, bvps_clips[i])
             count += 1
-        return input_path_name_list, label_path_name_list
+        return input_path_name_list
 
     def multi_process_manager(self, data_dirs, config_preprocess, multi_process_quota=1):
         """Allocate dataset preprocessing across multiple processes.
@@ -591,9 +538,7 @@ class BaseLoader(Dataset):
         if not inputs:
             raise ValueError(self.dataset_name + ' dataset loading data error!')
         inputs = sorted(inputs)  # sort input file name list
-        labels = [input_file.replace("input", "label") for input_file in inputs]
         self.inputs = inputs
-        self.labels = labels
         self.preprocessed_data_len = len(inputs)
 
     @staticmethod
@@ -614,11 +559,7 @@ class BaseLoader(Dataset):
     @staticmethod
     def diff_normalize_label(label):
         """Calculate discrete difference in labels along the time-axis and normalize by its standard deviation."""
-        diff_label = np.diff(label, axis=0)
-        diffnormalized_label = diff_label / np.std(diff_label)
-        diffnormalized_label = np.append(diffnormalized_label, np.zeros(1), axis=0)
-        diffnormalized_label[np.isnan(diffnormalized_label)] = 0
-        return diffnormalized_label
+        raise NotImplementedError()
 
     @staticmethod
     def standardized_data(data):
@@ -631,10 +572,7 @@ class BaseLoader(Dataset):
     @staticmethod
     def standardized_label(label):
         """Z-score standardization for label signal."""
-        label = label - np.mean(label)
-        label = label / np.std(label)
-        label[np.isnan(label)] = 0
-        return label
+        raise NotImplementedError()
 
     @staticmethod
     def resample_ppg(input_signal, target_length):

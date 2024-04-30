@@ -7,15 +7,13 @@ S. Bobbia, R. Macwan, Y. Benezeth, A. Mansouri, J. Dubois, "Unsupervised skin ti
 import glob
 import os
 import re
-from multiprocessing import Pool, Process, Value, Array, Manager
 
 import cv2
 import numpy as np
-from dataset.data_loader.BaseLoader import BaseLoader
-from tqdm import tqdm
+from dataset.data_loader.InferenceOnlyBaseLoader import InferenceOnlyBaseLoader
 
 
-class CustomLoader(BaseLoader):
+class CustomLoader(InferenceOnlyBaseLoader):
     """The data loader for the UBFC-rPPG dataset."""
 
     def __init__(self, name, data_path, config_data):
@@ -26,15 +24,12 @@ class CustomLoader(BaseLoader):
                 -----------------
                      RawData/
                      |   |-- subject1/
-                     |       |-- vid.avi
-                     |       |-- ground_truth.txt
+                     |       |-- vid.mp4
                      |   |-- subject2/
-                     |       |-- vid.avi
-                     |       |-- ground_truth.txt
+                     |       |-- vid.mp4
                      |...
                      |   |-- subjectn/
-                     |       |-- vid.avi
-                     |       |-- ground_truth.txt
+                     |       |-- vid.mp4
                 -----------------
                 name(string): name of the dataloader.
                 config_data(CfgNode): data settings(ref:config.py).
@@ -82,16 +77,11 @@ class CustomLoader(BaseLoader):
         else:
             raise ValueError(f'Unsupported DATA_AUG specified for {self.dataset_name} dataset! Received {config_preprocess.DATA_AUG}.')
 
-        # Read Labels
-        # if config_preprocess.USE_PSUEDO_PPG_LABEL:
-        #     bvps = self.generate_pos_psuedo_labels(frames, fs=self.config_data.FS)
-        # else:
-        bvps = self.read_wave(
-            os.path.join(data_dirs[i]['path'],"ground_truth.txt"))
-        # bvps = np.random.randn((1800))
-            
-        frames_clips, bvps_clips = self.preprocess(frames, bvps, config_preprocess)
-        input_name_list, label_name_list = self.save_multi_process(frames_clips, bvps_clips, saved_filename)
+        frames_clips = self.preprocess(frames=frames, 
+                                       config_preprocess=config_preprocess)
+
+        input_name_list = self.save_multi_process(frames_clips=frames_clips, 
+                                                  filename=saved_filename)
         file_list_dict[i] = input_name_list
 
     @staticmethod

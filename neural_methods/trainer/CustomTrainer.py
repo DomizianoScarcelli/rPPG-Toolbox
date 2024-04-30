@@ -58,32 +58,26 @@ class CustomTrainer(BaseTrainer):
         with torch.no_grad():
             for _, test_batch in enumerate(tqdm(data_loader["test"], ncols=80)):
                 batch_size = test_batch[0].shape[0]
-                data_test, labels_test = test_batch[0].to(
-                    self.config.DEVICE), test_batch[1].to(self.config.DEVICE)
+                data_test = test_batch[0].to(self.config.DEVICE) 
                 N, D, C, H, W = data_test.shape
                 data_test = data_test.view(N * D, C, H, W)
-                labels_test = labels_test.view(-1, 1)
                 pred_ppg_test = self.model(data_test)
 
                 if self.config.TEST.OUTPUT_SAVE_DIR:
-                    labels_test = labels_test.cpu()
                     pred_ppg_test = pred_ppg_test.cpu()
 
                 for idx in range(batch_size):
-                    subj_index = test_batch[2][idx]
-                    sort_index = int(test_batch[3][idx])
+                    subj_index = test_batch[1][idx]
+                    sort_index = int(test_batch[2][idx])
                     if subj_index not in predictions.keys():
                         predictions[subj_index] = dict()
                         labels[subj_index] = dict()
                     predictions[subj_index][sort_index] = pred_ppg_test[idx * self.chunk_len:(idx + 1) * self.chunk_len]
-                    labels[subj_index][sort_index] = labels_test[idx * self.chunk_len:(idx + 1) * self.chunk_len]
         
         print('')
         for key, value in predictions.items():
             for key_1, value_1 in value.items():
                 print(f"predictions of key {key_1} has shape: {value_1.shape}")
-        # if self.config.TEST.OUTPUT_SAVE_DIR: # saving test outputs
-        #     self.save_test_outputs(predictions, labels, self.config)
 
     def save_model(self, index):
         """Inits parameters from args and the writer for TensorboardX."""
