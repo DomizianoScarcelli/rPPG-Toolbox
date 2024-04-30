@@ -50,7 +50,7 @@ LOG:
   PATH: runs/exp
 MODEL:
   DROP_RATE: 0.2
-  NAME: DeepPhys
+  NAME: CUSTOM
 INFERENCE:
   BATCH_SIZE: 1
   EVALUATION_METHOD: FFT        # "FFT" or "peak detection"
