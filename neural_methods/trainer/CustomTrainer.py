@@ -25,11 +25,10 @@ class CustomTrainer(BaseTrainer):
         self.min_valid_loss = None
         self.best_epoch = 0
         
-        if config.TOOLBOX_MODE == "only_test":
-            self.model = DeepPhys(img_size=config.TEST.DATA.PREPROCESS.RESIZE.H).to(self.device)
-            self.model = torch.nn.DataParallel(self.model, device_ids=list(range(config.NUM_OF_GPU_TRAIN)))
-        else:
+        if config.TOOLBOX_MODE != "only_test":
             raise ValueError("Custom trainer only supports 'only_test' as a TOOLBOX_MODE")
+        self.model = DeepPhys(img_size=config.TEST.DATA.PREPROCESS.RESIZE.H).to(self.device)
+        self.model = torch.nn.DataParallel(self.model, device_ids=list(range(config.NUM_OF_GPU_TRAIN)))
 
     def train(self, data_loader):
         raise NotImplementedError("Custom trainer doesn't impelement a training loop")
@@ -50,7 +49,7 @@ class CustomTrainer(BaseTrainer):
             raise ValueError("Custom trainer only supports 'only_test' as a TOOLBOX_MODE")
         if not os.path.exists(self.config.INFERENCE.MODEL_PATH):
             raise ValueError("Inference model path error! Please check INFERENCE.MODEL_PATH in your yaml.")
-        self.model.load_state_dict(torch.load(self.config.INFERENCE.MODEL_PATH, map_location=torch.device("cpu")))
+        self.model.load_state_dict(torch.load(self.config.INFERENCE.MODEL_PATH, map_location=torch.device(self.config.DEVICE)))
         print("Testing uses pretrained model!")
 
         self.model = self.model.to(self.config.DEVICE)
@@ -83,15 +82,10 @@ class CustomTrainer(BaseTrainer):
         for key, value in predictions.items():
             for key_1, value_1 in value.items():
                 print(f"predictions of key {key_1} has shape: {value_1.shape}")
-        # calculate_metrics(predictions, labels, self.config)
-        if self.config.TEST.OUTPUT_SAVE_DIR: # saving test outputs
-            self.save_test_outputs(predictions, labels, self.config)
+        # if self.config.TEST.OUTPUT_SAVE_DIR: # saving test outputs
+        #     self.save_test_outputs(predictions, labels, self.config)
 
     def save_model(self, index):
         """Inits parameters from args and the writer for TensorboardX."""
-        if not os.path.exists(self.model_dir):
-            os.makedirs(self.model_dir)
-        model_path = os.path.join(
-            self.model_dir, self.model_file_name + '_Epoch' + str(index) + '.pth')
-        torch.save(self.model.state_dict(), model_path)
+        raise NotImplementedError("CustomTrainer doesn't allow model saving")
  
