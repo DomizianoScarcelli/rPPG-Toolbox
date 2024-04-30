@@ -466,7 +466,7 @@ class BaseLoader(Dataset):
             count += 1
         return input_path_name_list, label_path_name_list
 
-    def multi_process_manager(self, data_dirs, config_preprocess, multi_process_quota=8):
+    def multi_process_manager(self, data_dirs, config_preprocess, multi_process_quota=1):
         """Allocate dataset preprocessing across multiple processes.
 
         Args:
@@ -493,11 +493,15 @@ class BaseLoader(Dataset):
             while process_flag:  # ensure that every i creates a process
                 if running_num < multi_process_quota:  # in case of too many processes
                     # send data to be preprocessing task
+                    # # TODO: remove multiprocessing since everything crashes
+                    # self.preprocess_dataset_subprocess(data_dirs, config_preprocess, i, file_list_dict)
+
                     p = Process(target=self.preprocess_dataset_subprocess, 
                                 args=(data_dirs,config_preprocess, i, file_list_dict))
                     p.start()
                     p_list.append(p)
                     running_num += 1
+                    print(f"Running preprocessing processes: {running_num}")
                     process_flag = False
                 for p_ in p_list:
                     if not p_.is_alive():

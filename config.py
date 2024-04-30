@@ -16,7 +16,7 @@ _C.BASE = ['']
 # -----------------------------------------------------------------------------
 # Train settings
 # -----------------------------------------------------------------------------\
-_C.TOOLBOX_MODE = ""
+_C.TOOLBOX_MODE = "only_test"
 _C.TRAIN = CN()
 _C.TRAIN.EPOCHS = 50
 _C.TRAIN.BATCH_SIZE = 4
@@ -332,12 +332,12 @@ _C.INFERENCE.EVALUATION_METHOD = 'FFT'
 _C.INFERENCE.EVALUATION_WINDOW = CN()
 _C.INFERENCE.EVALUATION_WINDOW.USE_SMALLER_WINDOW = False
 _C.INFERENCE.EVALUATION_WINDOW.WINDOW_SIZE = 10
-_C.INFERENCE.MODEL_PATH = ''
+_C.INFERENCE.MODEL_PATH = './final_model_release/PURE_DeepPhys.pth'
 
 # -----------------------------------------------------------------------------
 # Device settings
 # -----------------------------------------------------------------------------
-_C.DEVICE = "cuda:0"
+_C.DEVICE = "cpu"
 _C.NUM_OF_GPU_TRAIN = 1
 
 # -----------------------------------------------------------------------------
