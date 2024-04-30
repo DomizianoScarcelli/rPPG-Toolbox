@@ -100,24 +100,25 @@ class CustomLoader(BaseLoader):
         VidObj = cv2.VideoCapture(video_file)
         VidObj.set(cv2.CAP_PROP_POS_MSEC, 0)
         success, frame = VidObj.read()
-        frames = list()
-        frames_step = 10
+        frames = None
+        # TODO: if you want to use this, you need to match the sample rate after or something
+        frames_step = 1
         i = 0
+        max_frames = 1000
         while success:
             i += 1
-            #NOTE: skip some frames
-            if frames_step % frames_step != 0:
-                continue
-            if len(frames) == 500:
-                success = False
-                continue
-            print(f"reading frame: {len(frames)}")
             frame = cv2.cvtColor(np.array(frame), cv2.COLOR_BGR2RGB)
-            frame = np.asarray(frame)
-            frames.append(frame)
+            if frames is None:
+                frames = np.expand_dims(np.empty_like(frame), 0)
+                print(f"frames initialization with shape: {frames.shape}")
+                frames = np.repeat(frames, max_frames, axis=0)
+                print(f"frames repeat with shape: {frames.shape}")
+            frames[i] = frame
             success, frame = VidObj.read()
+            if i == max_frames-1:
+                break
         print(f"read video completed!")
-        return np.asarray(frames)
+        return frames
 
     @staticmethod
     def read_wave(bvp_file):

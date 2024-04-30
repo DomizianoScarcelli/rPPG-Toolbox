@@ -20,7 +20,7 @@ TEST:
       TASK_LIST: ['T1', 'T2', 'T3']
     FS: 35
     DATASET: CUSTOM
-    DO_PREPROCESS: False # if first time, should be true
+    DO_PREPROCESS: True # if first time, should be true
     DATA_FORMAT: NDCHW
     DATA_PATH: "/Users/dov/Desktop/wip-projects/rPPG-Toolbox/data/InferenceVideos/RawData"                     # Raw dataset path, need to be updated
     CACHED_PATH: "/Users/dov/Desktop/wip-projects/rPPG-Toolbox/data/InferenceVideos/PreprocessedData"    # Processed dataset save path, need to be updated

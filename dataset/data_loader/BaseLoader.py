@@ -301,6 +301,7 @@ class BaseLoader(Dataset):
             # Use a TensorFlow-based RetinaFace implementation for face detection
             # This utilizes both the CPU and GPU
             res = RetinaFace.detect_faces(frame)
+            print(f"{len(res)} face detected: {res}")
 
             if len(res) > 0:
                 # Pick the highest score

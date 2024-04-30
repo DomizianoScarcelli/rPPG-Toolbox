@@ -191,8 +191,9 @@ class DeepPhysTrainer(BaseTrainer):
                     labels[subj_index][sort_index] = labels_test[idx * self.chunk_len:(idx + 1) * self.chunk_len]
         
         print('')
-        for key, value in predictions:
-            print(f"predictions of key {key} has shape: {value.shape}")
+        for key, value in predictions.items():
+            for key_1, value_1 in value.items():
+                print(f"predictions of key {key_1} has shape: {value_1.shape}")
         # calculate_metrics(predictions, labels, self.config)
         if self.config.TEST.OUTPUT_SAVE_DIR: # saving test outputs
             self.save_test_outputs(predictions, labels, self.config)
