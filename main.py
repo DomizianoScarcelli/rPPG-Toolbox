@@ -7,7 +7,8 @@ import torch
 from config import get_config
 from dataset import data_loader
 from neural_methods import trainer
-from unsupervised_methods.unsupervised_predictor import unsupervised_predict
+from dataset.data_loader.InferenceOnlyBaseLoader import InferenceOnlyBaseLoader
+from neural_methods.trainer.BaseTrainer import BaseTrainer
 from torch.utils.data import DataLoader
 
 RANDOM_SEED = 100
@@ -72,8 +73,8 @@ if __name__ == "__main__":
     # parse arguments.
     parser = argparse.ArgumentParser()
     parser = add_args(parser)
-    parser = trainer.BaseTrainer.BaseTrainer.add_trainer_args(parser)
-    parser = data_loader.BaseLoader.BaseLoader.add_data_loader_args(parser)
+    parser = BaseTrainer.add_trainer_args(parser)
+    parser = InferenceOnlyBaseLoader.add_data_loader_args(parser)
     args = parser.parse_args()
 
     # configurations.

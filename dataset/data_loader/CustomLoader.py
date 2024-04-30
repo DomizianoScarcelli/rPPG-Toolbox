@@ -45,19 +45,9 @@ class CustomLoader(InferenceOnlyBaseLoader):
             'video(\d+)', data_dir).group(0), "path": data_dir} for data_dir in data_dirs]
         return dirs
 
-    def split_raw_data(self, data_dirs, begin, end):
+    def split_raw_data(self, data_dirs):
         """Returns a subset of data dirs, split with begin and end values."""
-        if begin == 0 and end == 1:  # return the full directory if begin == 0 and end == 1
-            return data_dirs
-
-        file_num = len(data_dirs)
-        choose_range = range(int(begin * file_num), int(end * file_num))
-        data_dirs_new = []
-
-        for i in choose_range:
-            data_dirs_new.append(data_dirs[i])
-
-        return data_dirs_new
+        return data_dirs
 
     def preprocess_dataset_subprocess(self, data_dirs, config_preprocess, i, file_list_dict):
         """ invoked by preprocess_dataset for multi_process."""

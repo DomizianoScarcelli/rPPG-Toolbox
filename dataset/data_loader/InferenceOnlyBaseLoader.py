@@ -120,7 +120,7 @@ class InferenceOnlyBaseLoader(Dataset):
         """
         raise Exception("'get_raw_data' Not Implemented")
 
-    def split_raw_data(self, data_dirs, begin, end):
+    def split_raw_data(self, data_dirs):
         """Returns a subset of data dirs, split with begin and end values, 
         and ensures no overlapping subjects between splits.
 
@@ -164,7 +164,8 @@ class InferenceOnlyBaseLoader(Dataset):
             begin(float): index of begining during train/val split.
             end(float): index of ending during train/val split.
         """
-        data_dirs_split = self.split_raw_data(data_dirs, begin, end)  # partition dataset 
+        data_dirs_split = self.split_raw_data(data_dirs)  # partition dataset 
+        print(f"data dirs split is: {data_dirs_split}")
         # send data directories to be processed
         file_list_dict = self.multi_process_manager(data_dirs_split, config_preprocess) 
         self.build_file_list(file_list_dict)  # build file list
@@ -493,7 +494,7 @@ class InferenceOnlyBaseLoader(Dataset):
         """
 
         # get data split based on begin and end indices.
-        data_dirs_subset = self.split_raw_data(data_dirs, begin, end)
+        data_dirs_subset = self.split_raw_data(data_dirs)
 
         # generate a list of unique raw-data file names
         filename_list = []
