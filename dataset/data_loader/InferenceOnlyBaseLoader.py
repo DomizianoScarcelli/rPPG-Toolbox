@@ -211,8 +211,8 @@ class InferenceOnlyBaseLoader(Dataset):
 
         if config_preprocess.DO_CHUNK:  # chunk data into snippets
             frames_clips = self.chunk(
-                data=data, 
-                config_preprocess=config_preprocess.CHUNK_LENGTH)
+                frames=data, 
+                chunk_length=config_preprocess.CHUNK_LENGTH)
         else:
             frames_clips = np.array([data])
 

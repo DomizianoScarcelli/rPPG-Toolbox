@@ -31,7 +31,12 @@ TEST:
       DATA_TYPE: [ 'DiffNormalized','Standardized' ]
       LABEL_TYPE: "Raw"
       DO_CHUNK: True
-      CHUNK_LENGTH: 100
+      # - Chunk 100, final length 100
+      # - Chunk 175, final length 170 
+      # - Chunk 500, final length 180
+      # - Chunk 1000, final length 180
+      # Maybe max size is 180?
+      CHUNK_LENGTH: 100 #This is cool since I need a fixed length vector in input to the wavelet transform for EmotionNet.
       CROP_FACE:
         DO_CROP_FACE: True
         BACKEND: 'RF'    # HC for Haar Cascade, RF for RetinaFace
