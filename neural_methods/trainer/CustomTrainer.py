@@ -1,10 +1,7 @@
 
 """Trainer for DeepPhys."""
 import os
-
-import numpy as np
 import torch
-import torch.optim as optim
 from neural_methods.model.DeepPhys import DeepPhys
 from neural_methods.trainer.BaseTrainer import BaseTrainer
 from tqdm import tqdm
@@ -16,11 +13,8 @@ class CustomTrainer(BaseTrainer):
         """Inits parameters from args and the writer for TensorboardX."""
         super().__init__()
         self.device = torch.device(config.DEVICE)
-        self.max_epoch_num = config.TRAIN.EPOCHS
         self.model_dir = config.MODEL.MODEL_DIR
-        self.model_file_name = config.TRAIN.MODEL_FILE_NAME
-        self.batch_size = config.TRAIN.BATCH_SIZE
-        self.chunk_len = config.TRAIN.DATA.PREPROCESS.CHUNK_LENGTH
+        self.chunk_len = config.TEST.DATA.PREPROCESS.CHUNK_LENGTH
         self.config = config
         self.min_valid_loss = None
         self.best_epoch = 0

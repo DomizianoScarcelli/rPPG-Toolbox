@@ -97,13 +97,10 @@ def calculate_metrics(predictions, labels, config):
                 raise ValueError("Inference evaluation method name wrong!")
     
     # Filename ID to be used in any results files (e.g., Bland-Altman plots) that get saved
-    if config.TOOLBOX_MODE == 'train_and_test':
-        filename_id = config.TRAIN.MODEL_FILE_NAME
-    elif config.TOOLBOX_MODE == 'only_test':
-        model_file_root = config.INFERENCE.MODEL_PATH.split("/")[-1].split(".pth")[0]
-        filename_id = model_file_root + "_" + config.TEST.DATA.DATASET
-    else:
-        raise ValueError('Metrics.py evaluation only supports train_and_test and only_test!')
+    if config.TOOLBOX_MODE != 'only_test':
+        raise ValueError('Metrics.py evaluation only supports only_test!')
+    model_file_root = config.INFERENCE.MODEL_PATH.split("/")[-1].split(".pth")[0]
+    filename_id = model_file_root + "_" + config.TEST.DATA.DATASET
 
     if config.INFERENCE.EVALUATION_METHOD == "FFT":
         gt_hr_fft_all = np.array(gt_hr_fft_all)

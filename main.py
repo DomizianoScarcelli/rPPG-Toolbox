@@ -37,26 +37,7 @@ def seed_worker(worker_id):
 def add_args(parser):
     """Adds arguments for parser."""
     parser.add_argument('--config_file', required=False,
-                        default="configs/train_configs/PURE_PURE_UBFC-rPPG_TSCAN_BASIC.yaml", type=str, help="The name of the model.")
-    '''Neural Method Sample YAML LIST:
-      SCAMPS_SCAMPS_UBFC-rPPG_TSCAN_BASIC.yaml
-      SCAMPS_SCAMPS_UBFC-rPPG_DEEPPHYS_BASIC.yaml
-      SCAMPS_SCAMPS_UBFC-rPPG_PHYSNET_BASIC.yaml
-      SCAMPS_SCAMPS_PURE_DEEPPHYS_BASIC.yaml
-      SCAMPS_SCAMPS_PURE_TSCAN_BASIC.yaml
-      SCAMPS_SCAMPS_PURE_PHYSNET_BASIC.yaml
-      PURE_PURE_UBFC-rPPG_TSCAN_BASIC.yaml
-      PURE_PURE_UBFC-rPPG_DEEPPHYS_BASIC.yaml
-      PURE_PURE_UBFC-rPPG_PHYSNET_BASIC.yaml
-      PURE_PURE_MMPD_TSCAN_BASIC.yaml
-      UBFC-rPPG_UBFC-rPPG_PURE_TSCAN_BASIC.yaml
-      UBFC-rPPG_UBFC-rPPG_PURE_DEEPPHYS_BASIC.yaml
-      UBFC-rPPG_UBFC-rPPG_PURE_PHYSNET_BASIC.yaml
-      MMPD_MMPD_UBFC-rPPG_TSCAN_BASIC.yaml
-    Unsupervised Method Sample YAML LIST:
-      PURE_UNSUPERVISED.yaml
-      UBFC-rPPG_UNSUPERVISED.yaml
-    '''
+                        default="configs/infer_configs/UBFC-rPPG_UBFC-PHYS_DEEPPHYS_BASIC_CUSTOM.yaml", type=str, help="The name of the model.")
     return parser
 
 def test(config, data_loader_dict):

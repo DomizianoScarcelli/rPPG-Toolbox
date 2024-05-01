@@ -36,6 +36,7 @@ TEST:
       # - Chunk 500, final length 180
       # - Chunk 1000, final length 180
       # Maybe max size is 180?
+      # NOTE: current video is 60fps
       CHUNK_LENGTH: 100 #This is cool since I need a fixed length vector in input to the wavelet transform for EmotionNet.
       CROP_FACE:
         DO_CROP_FACE: True
